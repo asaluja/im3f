@@ -67,8 +67,10 @@ if nargin < 4
     %'-lgomp', '-lgsl', '-lgslcblas', '-lmwlapack', '-lmwblas',  '-lm', ...
     mexOpts = {'CFLAGS=\$CFLAGS -std=c99 -fopenmp', ...    % Removed openmp                   
                  '-lgomp', '-lgsl', '-lgslcblas', '-lmwlapack', '-lmwblas',  '-lm', ...
-                 '-g'}; % Debug
-               %'-DNDEBUG'};
+     '-g'}; % Debug
+            %mexOpts = {'CFLAGS=\$CFLAGS -std=c99 -fopenmp', ...    % Removed openmp                   
+            %     '-lgomp', '-lgsl', '-lgslcblas', '-lmwlapack', '-lmwblas',  '-lm', ...
+            %'-DNDEBUG'};
 end
 
 display(['Compiling mex files with ', strcat(mexOpts{:})]);
@@ -84,7 +86,10 @@ if(make_m3f_tib)
    fprintf('Compiling m3f_tib files...\n');
    mex('mex/sgdFactorVectors.c', 'mex/mexCommon.c', mexOpts{:});
    mex('mex/m3f_tib_predictMex.c', 'mex/mexCommon.c', mexOpts{:});
-   mex('mex/m3f_tib_predictToneyMex.c', 'mex/mexCommon.c', mexOpts{:});
+   mex('mex/m3f_tib_predictToneyMex.c', 'mex/mexCommon.c',mexOpts{:});
+   mex('mex/getResidualMex.c', 'mex/mexCommon.c', mexOpts{:}); 
+   mex('mex/sampleCRFTablesMex.c', 'mex/mexCommon.c', mexOpts{:}); 
+   mex('mex/sampleCRFDishsMex.c', 'mex/mexCommon.c', mexOpts{:}); 
    mex('mex/m3f_tib_sampleFactorVectorsCRF.c', 'mex/mexCommon.c', mexOpts{:});
    mex('mex/m3f_tib_sampleOffsets.c', 'mex/mexCommon.c', mexOpts{:});
    mex('mex/m3f_tib_sampleTopics.c', 'mex/mexCommon.c', mexOpts{:});

@@ -1,4 +1,4 @@
-function runexperiments_args(sampler, gamma, beta)
+function runexperiments_dblp (gamma, beta)
 % -----------------------------------------------------------------------     
 %
 % Last revision: 9-July-2010
@@ -42,6 +42,6 @@ experDir = '~/im3f/data/experiments';
 %        m3f_tib_exper(experDir, 'crf', 'ml100k', {'a1'}, 'crf', 'collapsed', 3, 12345, 40, 1, 1, gamma, beta, 500);
 %    end
 %end
-m3f_tib_exper(experDir, 'crf', 'ml10m', {'a', 'b'}, 'crf', char(sampler), 3, ...
-              12345, 10, 4, 1, str2num(gamma), str2num(beta), 500);
+m3f_tib_exper(experDir, 'crf_dblp', 'dblp', {'a'}, 'crf', 'noncollapsed', 2, ...
+              12345, 10, 4, 1, str2num(gamma), str2num(beta), 100);
 exit

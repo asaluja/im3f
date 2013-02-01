@@ -44,7 +44,8 @@ for s = splitNames
    useHoldOut = false; % Use hold out in place of test data?
    modelID = sprintf('-%s_%s_numFacs%d_KU%d_KM%d_gamma%g_beta%g_T%g', topicModel, iscollapsed, numFacs, KU, KM, gamma, beta,T);
    fprintf('Loading data set %s with split %s, model %s, and init %d\n', dataName, s, modelID, initMode);
-   [data, testData] = loadDyadicDataToney(dataName, s, useHoldOut);
+   %[data, testData] = loadDyadicDataToney(dataName, s, useHoldOut);
+   [data, testData] = loadDyadicDataAvneesh(dataName, s, useHoldOut);
    
    %% Initialize model
    model = m3f_tib_initModel(data.numUsers, data.numItems, numFacs, KU, KM, gamma, beta);
@@ -52,7 +53,8 @@ for s = splitNames
    save(sprintf([experDir, '/', experName,'/models/',experName,'_%s_split%s_model%s'], dataName, s, modelID), 'model');
    
    %% Choose initial sample
-   samp = m3f_tib_initSamp(topicModel, iscollapsed, model, data);   
+   %samp = m3f_tib_initSamp(topicModel, iscollapsed, model, data);   
+   samp = m3f_tib_initSamp_v2(initMode, iscollapsed, model, data);   
    
    %% Create Gibbs sampling options structure   
    opts.T = T; % Number of sampling rounds (including initial sample)   

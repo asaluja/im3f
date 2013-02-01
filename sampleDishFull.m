@@ -31,6 +31,6 @@ mult_norm = mult / sum(mult); % Normalize;
 % Sample the new dish, and update related fields
 k_new = find(mnrnd(1, mult_norm));
 
-if length(k_new) > 1
-    display(mC);display(logmult);display(mult);
-end
+%if length(k_new) > 1
+%    display(mC);display(logmult);display(mult);
+%end

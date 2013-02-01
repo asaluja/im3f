@@ -19,11 +19,18 @@ end
 for uu = 1:numUsers
     kuM = sampkuM{uu}; nuM = sampnuM{uu}; tuM = samptuM{uu};    
     TuM = length(nuM);
-    
     % First assemble all examps for each table
     examps = exampsByUser{uu};
     tuM_cell = cell(1, TuM);
     for ee_i = 1:length(tuM)
+        if length(tuM) ~= length(examps)
+            fprintf('Uh oh, problem with user %d and example %d\n', ...
+                    uu, ee_i); 
+        end
+        if tuM(ee_i) > TuM
+            fprintf('Uh oh, problem with user %d and example %d\n', ...
+                    uu, ee_i); 
+        end
         tuM_cell{tuM(ee_i)} = [tuM_cell{tuM(ee_i)}, examps(ee_i)];
     end
     
@@ -48,8 +55,8 @@ for uu = 1:numUsers
         %new_k = sampleDish(samp, tuM_cell{tt}, model, isItemTopic);
         new_k = sampleDishFull(tuM_cell{tt},samp.resids,mC,muC,muD,kU,nC, nD, model,isItemTopic);
         if length(new_k) > 1
-            display(uu);display(kuM);display(nuM);display(tuM);display(TuM);
-            display(tt);display(old_k);display(new_k);display(tuM_cell{tt});
+        %    display(uu);display(kuM);display(nuM);display(tuM);display(TuM);
+        %    display(tt);display(old_k);display(new_k);display(tuM_cell{tt});
             new_k = randi(length(mC) + 1);
         end
         empty_dishes = find(nC == 0);

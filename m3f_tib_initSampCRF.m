@@ -163,7 +163,8 @@ elseif initMode < 4
             'stochastic gradient descent\n']);
 
    %% Initialize to model means and then learn MAP estimates of static factors
-   samp = m3f_tib_initSamp(topicModel, 2, model, data, testData);
+   %samp = m3f_tib_initSamp(topicModel, 2, model, data, testData);
+   samp = m3f_tib_initSamp_v2(2, false, model, data); 
    sgdFactorVectors(data, model, samp, 10, testData);
    
 else

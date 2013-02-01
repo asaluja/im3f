@@ -41,7 +41,8 @@ for uu = 1:numUsers
             residC = samp.resids(ee) - muD(kU(ee));
         else % Non collapsed
             residC = samp.resids(ee) - d(kU(ee));
-        end
+        end      
+            
         % Remove current rating from table
         nuM(old_t) = nuM(old_t) - 1;
         
@@ -61,7 +62,8 @@ for uu = 1:numUsers
             mult(tt) = double(nuM(tt)) * exp(- (residC - muC(kuM(tt))) ^ 2 / sigmaStarSqd / 2) / (sigmaStarSqd ^ 0.5);
         end
         
-        % Iterate all existing dishes to get the probability of assigning to a new dish
+        % Iterate all existing dishes to get the probability of
+        % assigning to a new dish
         sigmaDSqd = getSigmaDSqd(kU(ee), nD, model);
         % TODO change this sigmaC (= sigma0)
         mult(TuM + 1) = betaM * exp(- (residC - c0) ^ 2 / (model.sigmaSqd + sigmaDSqd) / 2) / ((sigmaDSqd + model.sigmaSqd) ^ 0.5);
@@ -77,13 +79,13 @@ for uu = 1:numUsers
         % Sample new table assignment from the multinomial, update nuM, tuM, kuM
         new_t = find(mnrnd(1,mult_norm));
         
-        if length(new_t) > 1
-            display(ee_i);display(ee);display(data.users(ee));display(data.items(ee));display(isItemTopic);            
-            display(nuM);display(kuM);display(muC(kuM));
-            display(new_t);display(mult_norm);display(mult);display(divid);
-            display(residC);display(muD);display(kU(ee));
-            display(mC);display(muC);           
-        end
+        %if length(new_t) > 1
+        %    display(ee_i);display(ee);display(data.users(ee));display(data.items(ee));display(isItemTopic);            
+        %    display(nuM);display(kuM);display(muC(kuM));
+        %    display(new_t);display(mult_norm);display(mult);display(divid);
+        %    display(residC);display(muD);display(kU(ee));
+        %    display(mC);display(muC);           
+        %end
                 
         if length(new_t) > 1
             new_t = randi(TuM + 1); % Hack
