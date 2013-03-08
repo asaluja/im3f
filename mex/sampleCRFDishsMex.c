@@ -241,6 +241,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	int old_k = kuM[tt] - 1;
 	//update global dish sufficient stats immediately
 	mC[old_k] -= 1; 
+	if (mC[old_k] < 0){ mC[old_k] = 0; }
 	for (mwSize ee_i = 0; ee_i < table_size; ee_i++){ //loop through all examples assigned to table
 	  uint32_t ee = examp_tuM[ee_i] - 1;
 	  double residC = (params[1]) ? resids[ee] - muD[kU[ee]-1] : resids[ee] - d[kU[ee]-1]; 	  

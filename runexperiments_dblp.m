@@ -43,5 +43,5 @@ experDir = '~/im3f/data/experiments';
 %    end
 %end
 m3f_tib_exper(experDir, 'crf_dblp', 'dblp', {'a'}, 'crf', 'noncollapsed', 2, ...
-              12345, 10, 4, 1, str2num(gamma), str2num(beta), 100);
+              12345, 25, 4, 2, str2num(gamma), str2num(beta), 200);
 exit

@@ -72,7 +72,7 @@ int sampleDishFull(const uint32_t* examps, const double* resids, const double* m
   double average = sum/(KM+1); 
   for (int i = 0; i < KM+1; i++ ){ 
     logmult[i] -= average; //mean shift values
-    if (logmult[i] > 30){logmult[i] = 30; } //N.B.: dont hardcode threshold
+    if (logmult[i] > 30){logmult[i] = 30; } //N.B.: dont hardcode threshold    
   }
   double mult[KM+1]; 
   for (int kk = 0; kk < KM; kk++ ){ mult[kk] = mC[kk] * exp(logmult[kk]); }
@@ -153,7 +153,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
     length_muC = mxGetN(mxGetField(samp, 0, "muC")); 
     muC = (double*)mxMalloc((length_muC)*sizeof(double)); 
     memcpy(muC, mxGetPr(mxGetField(samp, 0, "muC")), length_muC*sizeof(double));
-    //muC = mxGetPr(mxGetField(samp, 0, "muC"));
     muD = mxGetPr(mxGetField(samp, 0, "muD")); 
     c0 = (*mxGetPr(mxGetField(model, 0, "c0")));
     betaM = (*mxGetPr(mxGetField(model, 0, "betaM")));
@@ -229,6 +228,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       muC[old_k] = updateCRFMu(muC, nC, residC, old_k, false, model); //remove current rating from global sufficient stats
       //NOTE: this is a hack!!
       if (fabs(muC[old_k]) > 30){ int sign = (muC[old_k] > 0) - (muC[old_k] < 0); muC[old_k] = sign*30; }
+      //if (fabs(muC[old_k]) < 0.0000000001){ int sign = (muC[old_k] > 0) - (muC[old_k] < 0); muC[old_k] = sign*0.0000000001; }
       nC[old_k] -= 1; //cannot use -- because nC is a double array
       //assemble multinomial probability vector below
       double mult[TuM+1]; 
@@ -239,20 +239,38 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       for (mwSize tt = 0; tt < TuM; tt++ ){ //go through each table and assign the probability of selecting that table (likelihood x prior)
 	const double sigmaStarSqd = getSigmaStarSqd(kuM[tt]-1, kU[ee]-1, nC, nD, sigmaSqd, invsigmaSqd, invsigmaSqd0); 
 	mult[tt] = nuM[tt] * exp(-pow(residC - muC[kuM[tt]-1], 2)/(2*sigmaStarSqd)) / (pow(sigmaStarSqd, 0.5)); 
+	if (isnan(mult[tt])){
+	    mexPrintf("likelihood for table %d and example %d is NaN!\n", tt, ee);
+	    mexPrintf("SigmaStarSqd is %.5f, dish assignment is %d, muC is %.5f, residC is %.5f\n", sigmaStarSqd, kuM[tt]-1, muC[kuM[tt]-1], residC);
+	  }
       }
       //iterate through all existing dishes to get the probability of assigning to a new dish
       const double sigmaDSqd = getSigmaDSqd(kU[ee]-1, nD, invsigmaSqd, invsigmaSqd0); 
       //TODO (from Dongzhen): change this sigmaC (=sigma0)
       mult[TuM] = betaM * exp(-pow(residC - c0, 2)/(2*(sigmaSqd + sigmaDSqd))) / (pow(sigmaSqd + sigmaDSqd, 0.5)); 
+      if (isnan(mult[TuM])){
+	mexPrintf("Likelihood for sampling new table NaN!\n"); 
+      }
       double divid = betaM; 
       for (mwSize kk = 0; kk < length_mC; kk++ ){ //when sampling a new dish, we are fully Bayesian and go through all dishes
 	const double sigmaStarSqd = getSigmaStarSqd(kk, kU[ee]-1, nC, nD, sigmaSqd, invsigmaSqd, invsigmaSqd0); 
 	mult[TuM] += mC[kk] * exp(-pow(residC - muC[kk], 2)/(2*sigmaStarSqd)) / (pow(sigmaStarSqd, 0.5)); 
 	divid += mC[kk]; 
+	if (isnan(mult[TuM])){
+	    mexPrintf("likelihood for unused table %d and example %d is NaN!\n", TuM, ee);
+	    mexPrintf("SigmaStarSqd is %.5f, dish assignment is %d, muC is %.5f, mC is %.5f, residC is %.5f\n", sigmaStarSqd, kk, muC[kk], mC[kk], residC);
+	}
       }
       mult[TuM] = (gammaM * mult[TuM]) / divid; //probability of sampling new table
+      if (isnan(mult[TuM])){
+	mexPrintf("After dividing by divid and multiplying by gamma, mult[TuM] becomes NaN!\n");
+	mexPrintf("GammaM is %.5f, divid is %.5f\n", gammaM, divid); 
+      }
+      //for (int i = 0; i < TuM + 1; i++ ){mexPrintf("mult[%d]: %.5f; ", i, mult[i]);}
+      //mexPrintf("\n");
       double sum = 0; 
       for (int i = 0; i < TuM + 1; i++ ){ sum += mult[i]; }
+      if (!(sum > 0)){ mexPrintf("Normalizer is 0! User %d, example %d\n", uu, ee); }
       double multi_norm[TuM+1]; 
       for (int i = 0; i < TuM + 1; i++ ){multi_norm[i] = mult[i] / sum; } //normalized multinorm
       //sample new table assignments from multinomial, update nuM, tuM, kuM
@@ -260,10 +278,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       gsl_ran_multinomial(rng, (size_t)(TuM + 1), 1, multi_norm, new_t_sample); //will return array same length as multi_norm in new_t
       uint32_t new_t = linearSearch(new_t_sample, 1, TuM+1); //see what table we selected      
       if (new_t == -1){
-	mexPrintf("Error! Cannot find sampled idx for new table\n");
+	mexPrintf("Error! Cannot find sampled idx for new table for user %d and example %d\n", uu, ee);
 	for (int i = 0; i < TuM+1; i++ )
-	  mexPrintf("multi_norm[%d]: %.10f; ", i, multi_norm[i]);
+	  mexPrintf("multi_norm[%d]: %.5f; ", i, multi_norm[i]);
 	mexPrintf("\n"); 
+	double mult_unif[TuM+1];
+	for (int i = 0; i < TuM + 1; i++ ){ mult_unif[i] = ((double)1.0) / (TuM + 1); }
+	gsl_ran_multinomial(rng, (size_t)(TuM+1), 1, mult_unif, new_t_sample); 
+	new_t = linearSearch(new_t_sample, 1, TuM+1); 
       }
       mxFree(new_t_sample); 
       //two if conditions in original matlab code left out since it seems they're never hit
@@ -311,6 +333,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
       muC[new_k] = updateCRFMu(muC, nC, residC, new_k, true, model); //add sufficient statistics to dish parameters
       //NOTE: this is a hack!
       if (fabs(muC[new_k]) > 30){ int sign = (muC[new_k] > 0) - (muC[new_k] < 0); muC[new_k] = sign*30; }
+      //if (fabs(muC[new_k]) < 0.0000000001){ int sign = (muC[new_k] > 0) - (muC[new_k] < 0); muC[new_k] = sign*0.0000000001; }
       nC[new_k] += 1;           
     } //close loop through examples per user         
     //update kuM, nuM (tuM remains same size, values are updated already, so no need to write out to plhs)
